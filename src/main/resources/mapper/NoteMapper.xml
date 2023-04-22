@@ -4,4 +4,13 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="cn.nean.notes.mapper.NoteMapper">
 
+    <update id="updateNote">
+        UPDATE `note` SET title = #{note.title}, content = #{note.content}, tags = #{note.tags}
+        WHERE id = #{noteDto.id}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE `note` SET status = 1
+        WHERE id = #{noteId}
+    </update>
 </mapper>

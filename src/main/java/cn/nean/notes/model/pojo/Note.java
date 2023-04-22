@@ -27,6 +27,8 @@ public class Note {
 
     private Integer comments;
 
+    private Integer readingQuantity;
+
     private Integer forwards;
 
     private Integer status;
