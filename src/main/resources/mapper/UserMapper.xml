@@ -18,4 +18,11 @@
             </if>
         </where>
     </select>
+    <select id="queryUserDtoByUserId" resultType="cn.nean.notes.model.dto.UserDto">
+        SELECT
+            id,nickname,avatar
+        FROM
+            `user`
+        WHERE id = #{userId}
+    </select>
 </mapper>

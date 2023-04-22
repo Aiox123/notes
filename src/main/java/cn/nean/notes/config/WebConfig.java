@@ -21,6 +21,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .excludePathPatterns("/auth/login")
                 .excludePathPatterns("/auth/register")
                 .excludePathPatterns("/auth/applyCode/{email}")
+                .excludePathPatterns("/note/default/query/{noteId}")
                 .order(1);
         registry.addInterceptor(new RefreshTokenInterceptor(stringRedisTemplate))
                 .order(0);

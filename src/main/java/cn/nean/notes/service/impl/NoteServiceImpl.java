@@ -3,8 +3,11 @@ package cn.nean.notes.service.impl;
 import cn.hutool.core.date.DateUtil;
 import cn.nean.notes.common.response.RestResponse;
 import cn.nean.notes.mapper.NoteMapper;
+import cn.nean.notes.mapper.UserMapper;
 import cn.nean.notes.model.dto.NoteDto;
+import cn.nean.notes.model.dto.UserDto;
 import cn.nean.notes.model.pojo.Note;
+import cn.nean.notes.model.vo.NoteVo;
 import cn.nean.notes.service.NoteService;
 import cn.nean.notes.utils.UserHolder;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -12,7 +15,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
+import static cn.nean.notes.common.constants.SysConstants.DEFAULT_PAGE_SIZE;
 
 @Service
 @Slf4j
@@ -22,12 +29,15 @@ public class NoteServiceImpl extends ServiceImpl<NoteMapper, Note>
     @Resource
     NoteMapper noteMapper;
 
+    @Resource
+    UserMapper userMapper;
+
     @Override
     public RestResponse<Object> takeNote(NoteDto noteDto) {
         // NoteDto 对象转为 Note对象
         Note note = noteDtoToNote(noteDto);
         // 保存创建时间
-        note.setCreate_time(DateUtil.now());
+        note.setCreateTime(DateUtil.now());
         // 存入 db
         boolean isSave = save(note);
         if(isSave){
@@ -59,6 +69,46 @@ public class NoteServiceImpl extends ServiceImpl<NoteMapper, Note>
         return RestResponse.validFail("发布失败!");
     }
 
+    @Override
+    public RestResponse<List<NoteVo>> defaultQuery(Long noteId) {
+        List<Note> notes = noteMapper.defaultQueryNotes(noteId, DEFAULT_PAGE_SIZE);
+        List<NoteVo> noteVos = new ArrayList<>(10);
+        for (Note note : notes) {
+            UserDto userDto = userMapper.queryUserDtoByUserId(note.getUserId());
+            noteVos.add(noteToNoteVo(note, userDto));
+        }
+        return RestResponse.success(noteVos);
+    }
+
+    /*
+    *  Note -> NoteVo
+    * */
+    private NoteVo noteToNoteVo(Note note,UserDto userDto){
+        List<String> tags = tagToTagList(note.getTags());
+        return NoteVo.builder()
+                .id(note.getId())
+                .userId(userDto.getId())
+                .nickname(userDto.getNickname())
+                .avatar(userDto.getAvatar())
+                .title(note.getTitle())
+                .content(note.getContent())
+                .tags(tags)
+                .likes(note.getLikes())
+                .collects(note.getCollects())
+                .comments(note.getComments())
+                .forwards(note.getForwards())
+                .readCounts(note.getReadCounts())
+                .create_time(note.getCreateTime())
+                .build();
+    }
+
+    /*
+    * tag String -> List tags
+    * */
+    private List<String> tagToTagList(String tag){
+        return Arrays.asList(tag.split(","));
+    }
+
     /*
      * 更新 -> NoteDto 对象转为 Note对象
      * */
@@ -85,7 +135,7 @@ public class NoteServiceImpl extends ServiceImpl<NoteMapper, Note>
                 .collects(0)
                 .likes(0)
                 .comments(0)
-                .readingQuantity(0)
+                .readCounts(0)
                 .forwards(0)
                 .status(0)
                 .build();

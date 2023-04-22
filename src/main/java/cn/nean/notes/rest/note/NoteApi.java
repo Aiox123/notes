@@ -3,10 +3,12 @@ package cn.nean.notes.rest.note;
 
 import cn.nean.notes.common.response.RestResponse;
 import cn.nean.notes.model.dto.NoteDto;
+import cn.nean.notes.model.vo.NoteVo;
 import cn.nean.notes.service.NoteService;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 @RestController
 @RequestMapping("/note")
@@ -37,5 +39,16 @@ public class NoteApi {
     @PostMapping("/release/{noteId}")
     public RestResponse<Object> releaseNote(@PathVariable Long noteId){
         return noteService.releaseNote(noteId);
+    }
+
+    /*
+    * 默认查询笔记
+    * */
+    @GetMapping("/default/query/{noteId}")
+    public RestResponse<List<NoteVo>> defaultQuery(@PathVariable(required = false) Long noteId){
+        if (noteId == null){
+            noteId = 0L;
+        }
+        return noteService.defaultQuery(noteId);
     }
 }

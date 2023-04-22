@@ -132,6 +132,7 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User>
         String now = DateUtil.now();
         return User.builder()
                 .username(accountDto.getUsername())
+                .nickname("Echo_" + RandomUtil.randomInt(1000,9999))
                 .password(accountDto.getPassword())
                 .cellPhone(accountDto.getCellPhone())
                 .email(accountDto.getEmail())

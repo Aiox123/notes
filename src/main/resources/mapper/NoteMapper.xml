@@ -13,4 +13,15 @@
         UPDATE `note` SET status = 1
         WHERE id = #{noteId}
     </update>
+    <select id="defaultQueryNotes" resultType="cn.nean.notes.model.pojo.Note">
+        SELECT
+            *
+        FROM
+            note
+        WHERE
+            id > #{noteId}
+        ORDER BY
+            likes
+        LIMIT #{pages}
+    </select>
 </mapper>
