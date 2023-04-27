@@ -5,8 +5,11 @@ import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.codec.Base62;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.RandomUtil;
+import cn.nean.notes.common.enums.LoginMethods;
 import cn.nean.notes.model.dto.AccountDto;
+import cn.nean.notes.model.dto.UserDto;
 import cn.nean.notes.model.pojo.User;
 import cn.nean.notes.common.response.RestResponse;
 import cn.nean.notes.config.EmailUtils;
@@ -60,6 +63,11 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User>
         if(!isCorrect){
             return RestResponse.validFail("验证码错误");
         }
+        // 验证邮箱是否已经注册过账号
+        User isExist = userMapper.queryByEmail(accountDto.getEmail());
+        if(isExist != null){
+            return RestResponse.validFail("该邮箱已被注册!");
+        }
         // 生成账号
         accountDto.setUsername(generateAccount());
         // 根据账号 生成密码
@@ -75,31 +83,39 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User>
 
     @Override
     public RestResponse<Object> login(AccountDto accountDto) {
-        // 根据账号或邮箱去查询数据库是否存在该账号
-        User user = userMapper.queryByUsernameOrEmail(accountDto);
-        if(user == null){
+        // 使用枚举加策略模式识别登录方式并进行查询数据库 --> loginUser
+        User loginUser = IdentifyLogin(accountDto,userMapper);
+        // 根据loginUser 判断是否存在该账号
+        if(ObjectUtil.isEmpty(loginUser)){
             return RestResponse.validFail("账号不存在,请确认账号!");
         }
         // 匹配密码是否正确
-        boolean isMatch = matchPassword(accountDto, user);
+        boolean isMatch = matchPassword(accountDto, loginUser);
         if(!isMatch){
             return RestResponse.validFail("密码错误!");
         }
-        String userID = user.getId().toString();
+        String userID = loginUser.getId().toString();
         // 生成 token
         String token = JwtUtil.createJWT(userID);
         // 将生成的 token 存入 redis
         stringRedisTemplate.opsForValue().set(AUTH_LOGIN_KEY + userID,token,AUTH_LOGIN_TTL, TimeUnit.MINUTES);
         // 将 user 对象转化为 Map 结构
-        Map<String, Object> userMap = userToMap(user);
+        Map<String, Object> userMap = userToMap(loginUser);
         // 使用Redis Hash结构 存储用户信息
         stringRedisTemplate.opsForHash().putAll(AUTH_USER_KEY + userID,userMap);
         // 设置有效期
         stringRedisTemplate.expire(AUTH_USER_KEY + userID,AUTH_USER_TTL,TimeUnit.MINUTES);
         Map<String,Object> result = new HashMap<>();
         result.put("token",token);
-        result.put("user",user);
+        result.put("user",loginUser);
         return RestResponse.success(result);
+    }
+
+    /*
+    * 识别登录类别 (使用枚举加策略模式识别登录方式并进行查询数据库)
+    * */
+    private User IdentifyLogin(AccountDto accountDto,UserMapper userMapper){
+        return LoginMethods.valueOf(accountDto.getType()).toLogin(accountDto,userMapper);
     }
 
     /*
@@ -172,7 +188,7 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User>
     * 生成 EchoNotes 平台 密码 (初始密码为 Echo + 账号数字部分)
     * 第一次登录后提醒修改密码
     * */
-    private static String generatePassword(String account){
+    public static String generatePassword(String account){
         // 拼接密码
         String password = "Echo" + account.substring(3);
         // 加密密码 并返会

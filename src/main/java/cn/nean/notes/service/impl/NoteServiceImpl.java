@@ -1,5 +1,7 @@
 package cn.nean.notes.service.impl;
 
+import cn.hutool.core.date.DateTime;
+import cn.hutool.core.date.DateUnit;
 import cn.hutool.core.date.DateUtil;
 import cn.nean.notes.common.response.RestResponse;
 import cn.nean.notes.mapper.NoteMapper;
@@ -15,8 +17,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 import static cn.nean.notes.common.constants.SysConstants.DEFAULT_PAGE_SIZE;
@@ -98,8 +102,28 @@ public class NoteServiceImpl extends ServiceImpl<NoteMapper, Note>
                 .comments(note.getComments())
                 .forwards(note.getForwards())
                 .readCounts(note.getReadCounts())
-                .create_time(note.getCreateTime())
+                .time(dataConversion(note.getCreateTime()))
                 .build();
+    }
+
+    /*
+    * 日期转换
+    *  */
+    private String dataConversion(String data){
+        Date createTime = DateUtil.parse(data);
+        Date now = new Date();
+        long betweenDay = DateUtil.between(now, createTime, DateUnit.DAY);
+        String dataTime = "今天";
+        if(1 < betweenDay && betweenDay < 7){
+            dataTime = "一天前";
+        }else if(7 < betweenDay && betweenDay < 30){
+            dataTime = "一周前";
+        }else if(30 < betweenDay && betweenDay < 365){
+            dataTime = "一月前";
+        }else if(365 < betweenDay){
+            dataTime = "一年前";
+        }
+        return dataTime;
     }
 
     /*

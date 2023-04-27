@@ -13,4 +13,8 @@ public interface UserMapper extends BaseMapper<User> {
     User queryByUsernameOrEmail(@Param("account")AccountDto accountDto);
 
     UserDto queryUserDtoByUserId(@Param("userId") Integer userId);
+
+    User queryByEmail(@Param("email") String email);
+
+    User queryByUsername(@Param("username") String username);
 }

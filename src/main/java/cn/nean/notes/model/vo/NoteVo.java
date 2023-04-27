@@ -37,5 +37,5 @@ public class NoteVo {
 
     private Integer forwards;
 
-    private String create_time;
+    private String time;
 }

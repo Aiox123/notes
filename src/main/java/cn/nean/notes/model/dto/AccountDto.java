@@ -22,4 +22,9 @@ public class AccountDto {
     private String codeKey;
 
     private String code;
+
+    /*
+    * 登录方式（账号、邮箱、手机号）
+    * */
+    private String type;
 }

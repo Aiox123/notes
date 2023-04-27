@@ -25,4 +25,18 @@
             `user`
         WHERE id = #{userId}
     </select>
+    <select id="queryByEmail" resultType="cn.nean.notes.model.pojo.User">
+        SELECT
+            *
+        FROM
+            `user`
+        WHERE email = #{email}
+    </select>
+    <select id="queryByUsername" resultType="cn.nean.notes.model.pojo.User">
+        SELECT
+            *
+        FROM
+            `user`
+        WHERE username = #{username}
+    </select>
 </mapper>
